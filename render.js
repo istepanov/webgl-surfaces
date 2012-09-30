@@ -85,8 +85,8 @@ function initBuffers() {
      0.0,  0.0,  1.0, 
   ];  
   
-  cubeVerticesNormalBuffer = gl.createBuffer();  
-  gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesNormalBuffer);
+  squareVerticesNormalBuffer = gl.createBuffer();  
+  gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesNormalBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormals), gl.STATIC_DRAW); 
 }
 
@@ -127,7 +127,7 @@ function drawScene() {
   gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 0);
 
   // normals
-  gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesNormalBuffer);  
+  gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesNormalBuffer);  
   gl.vertexAttribPointer(vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0);
 
   mvPushMatrix();  
@@ -165,6 +165,9 @@ function initShaders() {
 
   vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");  
   gl.enableVertexAttribArray(vertexColorAttribute);
+
+  vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal");
+  gl.enableVertexAttribArray(vertexNormalAttribute);
 }
 
 // ------------------------------------------------------------------------
