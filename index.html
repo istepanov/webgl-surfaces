@@ -38,39 +38,94 @@
     
     <!-- Vertex shader program -->
     <script id="shader-vs" type="x-shader/x-vertex">
-      attribute highp vec3 aVertexNormal;
       attribute highp vec3 aVertexPosition;
-      attribute vec4 aVertexColor;
 
+      // uniform matrices
       uniform highp mat4 uNormalMatrix;
       uniform highp mat4 uMVMatrix;
       uniform highp mat4 uPMatrix;
 
-      //uniform vec4 uLightPosition;
-      //uniform vec4 uEyePosition;
+      // uniform variables
+      uniform int uType;
+      uniform float uDistortion;        // from 0 to 1
+      uniform vec3 uLightPosition;
+      uniform vec3 uEyePosition;
       
       varying highp vec3 l;
       varying highp vec3 h;
       varying highp vec3 v;
       varying highp vec3 n;
 
-      varying highp vec3 vLighting;
-    
+      vec3 getPosition();
+      vec3 getNormal();
+
       void main(void) {
-        const vec3 uLightPosition = vec3(0.85, 0.8, 0.75);
-        const vec3 uEyePosition = vec3(0.0, 0.0, 10.0);
-
-        // position without perspective
-        vec3 position = vec3(uMVMatrix * vec4(aVertexPosition, 1.0));
-
-        // position with perspecive
+        // get position
+        vec3 position = getPosition();
+        // apply transforms
+        position = vec3(uMVMatrix * vec4(position, 1.0));
+        // apply perspecive
         gl_Position = uPMatrix * vec4(position, 1.0);
+        // get normal
+        vec3 normal = getNormal();
 
         // Blinn light
-        l = normalize(uLightPosition - position);                         // light source vector
-        v = normalize(uEyePosition - position);                           // viewer vector
-        h = normalize(l + v);                                             // halfway vector between the viewer and light-source vectors
-        n = vec3(normalize(uNormalMatrix * vec4(aVertexNormal, 1.0)));    // normal
+        l = normalize(uLightPosition - position);                   // light source vector
+        v = normalize(uEyePosition - position);                     // viewer vector
+        h = normalize(l + v);                                       // halfway vector between the viewer and light-source vectors
+        n = vec3(normalize(uNormalMatrix * vec4(normal, 1.0)));     // normal
+      }
+
+      // ----------------------------------
+
+      vec3 getPosition() {
+          float u = aVertexPosition.x;
+          float v = aVertexPosition.y;
+          
+          vec3 position;
+          
+          // коническая спираль
+          if (uType == 1)
+          {
+            /*float sin15v = sin(15.0 * v); 
+            float cos15v = cos(15.0 * v);
+            position = vec3
+            (
+              uDistortion * u * v * sin15v + (1.0 - uDistortion) * u,
+              v,
+              uDistortion * u * v * cos15v
+            );*/
+
+            position = aVertexPosition;
+          }
+
+          return position;
+      }
+
+      // ----------------------------------
+
+      vec3 getNormal() {
+          float u = aVertexPosition.x;
+          float v = aVertexPosition.y;
+          
+          vec3 normal;
+          
+          // коническая спираль
+          if (uType == 1)
+          {
+            /*float sin15v = sin(15.0 * v); 
+            float cos15v = cos(15.0 * v);
+            
+            normal = normalize(vec3
+            (
+              -uDistortion * v * cos15v,
+              uDistortion * v * cos15v * (uDistortion * u * sin15v + 15.0 * uDistortion * u * v * cos15v) - (uDistortion * u * cos15v - 15.0 * uDistortion * u * v * sin15v) * (uDistortion * v * sin15v + 1.0 - uDistortion),
+              uDistortion * v * sin15v + 1.0 - uDistortion
+            ));*/
+
+            normal = vec3(0, 0, 1);
+          }
+          return normal;
       }
 
     </script>

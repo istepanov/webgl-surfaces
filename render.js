@@ -1,13 +1,17 @@
+var surfaceX = 10;
+var surfaceY = 10;
+var surfaceDelta = 1.0;
+
 var canvas;
 var gl;
 var squareVerticesBuffer;
 var mvMatrix;
 var shaderProgram;
 var vertexPositionAttribute;
-var vertexNormalAttribute;
+var indicesLength = 0;
 var perspectiveMatrix;
-var squareRotation = 1.0;
-var lastSquareUpdateTime;
+var rotation = 1.0;
+var lastRenderTime;
 
 // ------------------------------------------------------------------------
 
@@ -56,38 +60,42 @@ function initWebGL() {
 // ------------------------------------------------------------------------
 
 function initBuffers() {
-  var vertices = [
-    1.0,  1.0,  0.0,
-    -1.0, 1.0,  0.0,
-    1.0,  -1.0, 0.0,
-    -1.0, -1.0, 0.0
-  ];
+  // vertices
+  /*var vertices = [
+    -1.0,  1.0,  0.0,
+    1.0, 1.0,  0.0,
+    -1.0,  -1.0, 0.0,
+    1.0, -1.0, 0.0,
+  ];*/
 
-  squareVerticesBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
+  var vertices = [];
+  var startX = -(surfaceX * surfaceDelta / 2.0);
+  var startY = -(surfaceY * surfaceDelta / 2.0);
+
+  for (var i = 0; i < surfaceY; i++) {
+    for (var j = 0; j < surfaceX; j++) {
+      vertices.push(startX + j * surfaceDelta, startY + i * surfaceDelta, 0.0);
+    }
+  }
+
+  verticesBuffer = gl.createBuffer();  
+  gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);      
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
-  var colors = [  
-    1.0,  1.0,  1.0,  1.0,    // white  
-    1.0,  0.0,  0.0,  1.0,    // red  
-    0.0,  1.0,  0.0,  1.0,    // green  
-    0.0,  0.0,  1.0,  1.0     // blue  
-  ];  
-    
-  squareVerticesColorBuffer = gl.createBuffer();  
-  gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesColorBuffer);  
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-    
-  var vertexNormals = [ 
-     0.0,  0.0,  1.0,
-     0.0,  0.0,  1.0,  
-     0.0,  0.0,  1.0,  
-     0.0,  0.0,  1.0, 
-  ];  
-  
-  squareVerticesNormalBuffer = gl.createBuffer();  
-  gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesNormalBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormals), gl.STATIC_DRAW); 
+  // indices
+  var indices = [];
+  for (var i = 0; i < surfaceY - 1; i++) {
+    for (var j = 0; j < surfaceX - 1; j++) {
+      indices.push(surfaceX * i + j, surfaceX * i + j + 1, surfaceX * (i + 1) + j);
+      indices.push(surfaceX * i + j + 1, surfaceX * (i + 1) + j + 1, surfaceX * (i + 1) + j);
+    }
+  }
+
+  indicesLength = indices.length;
+
+  verticesIndexBuffer = gl.createBuffer();  
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, verticesIndexBuffer);  
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 }
 
 // ------------------------------------------------------------------------
@@ -106,35 +114,37 @@ function drawScene() {
   // the center of the scene.
   loadIdentity();
   
-  // Now move the drawing position a bit to where we want to start
-  // drawing the square.
-  mvTranslate([-0.0, 0.0, -6.0]);
+  // move the drawing position
+  mvTranslate([-0.0, 0.0, -20.0]);
 
   // rotation
   var currentTime = (new Date).getTime();  
-  if (lastSquareUpdateTime) {  
-    var delta = currentTime - lastSquareUpdateTime;  
-    squareRotation += (30 * delta) / 1000.0;  
+  if (lastRenderTime) {  
+    var delta = currentTime - lastRenderTime;  
+    rotation += (30 * delta) / 1000.0;  
   }  
-  lastSquareUpdateTime = currentTime;
+  lastRenderTime = currentTime;
+
+  // uniform variables
+  gl.uniform1i(gl.getUniformLocation(gl.program, "uType"), 1);
+  gl.uniform1f(gl.getUniformLocation(gl.program, "uDistortion"), 1.0);
+  gl.uniform3f(gl.getUniformLocation(gl.program, "uLightPosition"), 0.85, 0.8, 0.75);
+  gl.uniform3f(gl.getUniformLocation(gl.program, "uEyePosition"), 0.0, 0.0, 10.0);
   
   // vertices
-  gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
+  gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
   gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
 
-  // colors
-  gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesColorBuffer);  
-  gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 0);
-
-  // normals
-  gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesNormalBuffer);  
-  gl.vertexAttribPointer(vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0);
+  // indices
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, verticesIndexBuffer);
 
   mvPushMatrix();  
-  mvRotate(squareRotation, [1, 0, 1]);
+  mvRotate(rotation, [1, 0, 1]);
 
   setMatrixUniforms();
-  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+  gl.drawElements(gl.TRIANGLES, indicesLength, gl.UNSIGNED_SHORT, 0);
+  //gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
   mvPopMatrix(); 
 }
@@ -162,12 +172,6 @@ function initShaders() {
   
   vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
   gl.enableVertexAttribArray(vertexPositionAttribute);
-
-  vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");  
-  gl.enableVertexAttribArray(vertexColorAttribute);
-
-  vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal");
-  gl.enableVertexAttribArray(vertexNormalAttribute);
 }
 
 // ------------------------------------------------------------------------
@@ -189,7 +193,6 @@ function getShader(gl, id) {
     if (currentChild.nodeType == 3) {
       theSource += currentChild.textContent;
     }
-    
     currentChild = currentChild.nextSibling;
   }
   
