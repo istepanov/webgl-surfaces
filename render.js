@@ -4,6 +4,7 @@ var squareVerticesBuffer;
 var mvMatrix;
 var shaderProgram;
 var vertexPositionAttribute;
+var vertexNormalAttribute;
 var perspectiveMatrix;
 var squareRotation = 1.0;
 var lastSquareUpdateTime;
@@ -76,6 +77,17 @@ function initBuffers() {
   squareVerticesColorBuffer = gl.createBuffer();  
   gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesColorBuffer);  
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+    
+  var vertexNormals = [ 
+     0.0,  0.0,  1.0,
+     0.0,  0.0,  1.0,  
+     0.0,  0.0,  1.0,  
+     0.0,  0.0,  1.0, 
+  ];  
+  
+  cubeVerticesNormalBuffer = gl.createBuffer();  
+  gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesNormalBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormals), gl.STATIC_DRAW); 
 }
 
 // ------------------------------------------------------------------------
@@ -104,18 +116,22 @@ function drawScene() {
     var delta = currentTime - lastSquareUpdateTime;  
     squareRotation += (30 * delta) / 1000.0;  
   }  
-  lastSquareUpdateTime = currentTime;  
-
-  mvPushMatrix();  
-  mvRotate(squareRotation, [1, 0, 1]);
+  lastSquareUpdateTime = currentTime;
   
-  // Draw the square by binding the array buffer to the square's vertices
-  // array, setting attributes, and pushing it to GL.
+  // vertices
   gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
   gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
 
+  // colors
   gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesColorBuffer);  
   gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 0);
+
+  // normals
+  gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesNormalBuffer);  
+  gl.vertexAttribPointer(vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0);
+
+  mvPushMatrix();  
+  mvRotate(squareRotation, [1, 0, 1]);
 
   setMatrixUniforms();
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -221,6 +237,11 @@ function setMatrixUniforms() {
 
   var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
   gl.uniformMatrix4fv(mvUniform, false, new Float32Array(mvMatrix.flatten()));
+
+  var normalMatrix = mvMatrix.inverse();
+  normalMatrix = normalMatrix.transpose();
+  var nUniform = gl.getUniformLocation(shaderProgram, "uNormalMatrix");
+  gl.uniformMatrix4fv(nUniform, false, new Float32Array(normalMatrix.flatten()));
 }
 
 var mvMatrixStack = [];  
