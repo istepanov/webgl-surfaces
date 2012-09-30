@@ -25,13 +25,18 @@
           const vec4 specColor = vec4(0.7, 0.7, 0.0, 1.0);
           const float specPower = 30.0;
 
-          vec3 n2 = normalize(n);
+          vec3 n2;
+          if (gl_FrontFacing)
+            n2 = normalize(n);
+          else
+            n2 = -normalize(n);
+
           vec3 l2 = normalize(l);
           vec3 h2 = normalize(h);
           vec4 diff = diffColor * max(dot(n2, l2), 0.0);
           vec4 spec = specColor * pow(max(dot(n2, h2), 0.0), specPower);
 
-          gl_FragColor = diff + spec;
+          gl_FragColor = vec4(0.5, 0.1, 0.1, 1.0) + diff + spec;
       }
 
     </script>
@@ -47,7 +52,7 @@
 
       // uniform variables
       uniform int uType;
-      uniform float uDistortion;        // from 0 to 1
+      uniform float uDistortion;        // from 0.0 to 1.0
       uniform vec3 uLightPosition;
       uniform vec3 uEyePosition;
       
@@ -81,23 +86,23 @@
       vec3 getPosition() {
           float u = aVertexPosition.x;
           float v = aVertexPosition.y;
+          float M = uDistortion;
           
           vec3 position;
-          
-          // коническая спираль
-          if (uType == 1)
-          {
-            /*float sin15v = sin(15.0 * v); 
-            float cos15v = cos(15.0 * v);
-            position = vec3
-            (
-              uDistortion * u * v * sin15v + (1.0 - uDistortion) * u,
-              v,
-              uDistortion * u * v * cos15v
-            );*/
 
-            position = aVertexPosition;
-          }
+          float sinu = sin(u);
+          float cosu = cos(u);
+          float sinv = sin(v);
+          float cosv = cos(v);
+    
+          position = vec3
+          (
+            M * sinu * sinv + (1.0 - M) * u,
+            M * cosu * sinv + (1.0 - M) * v,
+            M * cosu * cosv
+          );
+          
+          //position = aVertexPosition;
 
           return position;
       }
@@ -107,24 +112,24 @@
       vec3 getNormal() {
           float u = aVertexPosition.x;
           float v = aVertexPosition.y;
+          float M = uDistortion;
           
           vec3 normal;
-          
-          // коническая спираль
-          if (uType == 1)
-          {
-            /*float sin15v = sin(15.0 * v); 
-            float cos15v = cos(15.0 * v);
-            
-            normal = normalize(vec3
-            (
-              -uDistortion * v * cos15v,
-              uDistortion * v * cos15v * (uDistortion * u * sin15v + 15.0 * uDistortion * u * v * cos15v) - (uDistortion * u * cos15v - 15.0 * uDistortion * u * v * sin15v) * (uDistortion * v * sin15v + 1.0 - uDistortion),
-              uDistortion * v * sin15v + 1.0 - uDistortion
-            ));*/
 
-            normal = vec3(0, 0, 1);
-          }
+          float sinu = sin(u);
+          float cosu = cos(u);
+          float sinv = sin(v);
+          float cosv = cos(v);
+
+          normal = normalize (vec3
+          (
+            M * sinu * (M * sinv * sinv * cosu + cosv * (M * cosu * cosv + 1.0 - M)),
+            -M * (M * sinu * sinu * cosv * cosv - cosu * sinv * (M * cosu * sinv + 1.0 - M)),
+            (M * cosu * sinv + 1.0 - M) * (M * cosu * cosv + 1.0 - M) + M * M * sinu * sinu * cosv * sinv
+          ));
+
+          //normal = vec3(0, 0, 1);
+
           return normal;
       }
 

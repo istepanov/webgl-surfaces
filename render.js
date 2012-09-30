@@ -1,6 +1,7 @@
-var surfaceX = 10;
-var surfaceY = 10;
-var surfaceDelta = 1.0;
+var surfaceX = 50;
+var surfaceY = 50;
+var surfaceDelta = 0.15;
+var eyeZ = 5.0;
 
 var canvas;
 var gl;
@@ -10,8 +11,14 @@ var shaderProgram;
 var vertexPositionAttribute;
 var indicesLength = 0;
 var perspectiveMatrix;
-var rotation = 1.0;
+var rotationX = 0.0;
+var rotationY = 0.0;
+var rotationSpeed = 0.3;
+var distortion = 0.0;
+var distortionDirection = 1;
 var lastRenderTime;
+var lastMouseX;
+var lastMouseY;
 
 // ------------------------------------------------------------------------
 
@@ -34,6 +41,8 @@ function start() {
     // Here's where we call the routine that builds all the objects
     // we'll be drawing.
     initBuffers();
+
+    document.onmousemove = handleMouseMove;
     
     // Set up to draw the scene periodically.
     setInterval(drawScene, 15);
@@ -61,13 +70,6 @@ function initWebGL() {
 
 function initBuffers() {
   // vertices
-  /*var vertices = [
-    -1.0,  1.0,  0.0,
-    1.0, 1.0,  0.0,
-    -1.0,  -1.0, 0.0,
-    1.0, -1.0, 0.0,
-  ];*/
-
   var vertices = [];
   var startX = -(surfaceX * surfaceDelta / 2.0);
   var startY = -(surfaceY * surfaceDelta / 2.0);
@@ -100,6 +102,26 @@ function initBuffers() {
 
 // ------------------------------------------------------------------------
 
+function handleMouseMove()
+{
+    if (!lastMouseX || !lastMouseY) {
+      lastMouseX = event.clientX;
+      lastMouseY = event.clientY;
+      return;
+    }
+
+    var newX = event.clientX;
+    var newY = event.clientY;
+
+    rotationX += rotationSpeed * (newX - lastMouseX);
+    rotationY += rotationSpeed * (newY - lastMouseY);
+
+    lastMouseX = newX
+    lastMouseY = newY;
+}
+
+// ------------------------------------------------------------------------
+
 function drawScene() {
   // Clear the canvas before we start drawing on it.
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -115,21 +137,31 @@ function drawScene() {
   loadIdentity();
   
   // move the drawing position
-  mvTranslate([-0.0, 0.0, -20.0]);
+  mvTranslate([-0.0, 0.0, -eyeZ]);
 
-  // rotation
+  // animation
   var currentTime = (new Date).getTime();  
   if (lastRenderTime) {  
     var delta = currentTime - lastRenderTime;  
-    rotation += (30 * delta) / 1000.0;  
+      
+    distortion += distortionDirection * delta / 5000.0;
+    if (distortion > 1.0) {
+      distortion = 1.0;
+      distortionDirection = -1;
+    }
+    else if (distortion < 0.0)
+    {
+      distortion = 0.0;
+      distortionDirection = 1;
+    }
   }  
-  lastRenderTime = currentTime;
+  lastRenderTime = currentTime; 
 
   // uniform variables
-  gl.uniform1i(gl.getUniformLocation(gl.program, "uType"), 1);
-  gl.uniform1f(gl.getUniformLocation(gl.program, "uDistortion"), 1.0);
-  gl.uniform3f(gl.getUniformLocation(gl.program, "uLightPosition"), 0.85, 0.8, 0.75);
-  gl.uniform3f(gl.getUniformLocation(gl.program, "uEyePosition"), 0.0, 0.0, 10.0);
+  //gl.uniform1i(gl.getUniformLocation(shaderProgram, "uType"), 1);
+  gl.uniform1f(gl.getUniformLocation(shaderProgram, "uDistortion"), distortion);
+  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), 0.85, 0.8, 0.75);
+  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uEyePosition"), 0.0, 0.0, eyeZ);
   
   // vertices
   gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
@@ -139,12 +171,12 @@ function drawScene() {
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, verticesIndexBuffer);
 
   mvPushMatrix();  
-  mvRotate(rotation, [1, 0, 1]);
+  mvRotate(rotationX, [0, 1, 0]);
+  mvRotate(rotationY, [-1, 0, 0]);
 
   setMatrixUniforms();
 
   gl.drawElements(gl.TRIANGLES, indicesLength, gl.UNSIGNED_SHORT, 0);
-  //gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
   mvPopMatrix(); 
 }
@@ -156,14 +188,12 @@ function initShaders() {
   var vertexShader = getShader(gl, "shader-vs");
   
   // Create the shader program
-  
   shaderProgram = gl.createProgram();
   gl.attachShader(shaderProgram, vertexShader);
   gl.attachShader(shaderProgram, fragmentShader);
   gl.linkProgram(shaderProgram);
   
   // If creating the shader program failed, alert
-  
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
     alert("Unable to initialize the shader program.");
   }
@@ -216,7 +246,7 @@ function getShader(gl, id) {
   
   // See if it compiled successfully
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    alert("An error occurred compiling the shaders: " + gl.getShaderInfoLog(shader));
+    console.log("An error occurred compiling the shaders: " + gl.getShaderInfoLog(shader));
     return null;
   }
   
