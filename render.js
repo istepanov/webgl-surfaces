@@ -55,6 +55,7 @@ var ui = {
     state.surface = ui.surface.value;
     state.morphing = 0.0;
     state.morphingDirection = 1;
+    ui.morphing.value = 0.0;
   },
   onMorphingChange: function() {
     state.morphing = ui.morphing.value / 100.0;

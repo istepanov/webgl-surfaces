@@ -82,9 +82,9 @@
 
           normal = normalize(vec3
           (
-            M * sinu * (M * sinv * sinv * cosu + cosv * (M * cosu * cosv + 1.0 - M)),
-            -M * (M * sinu * sinu * cosv * cosv - cosu * sinv * (M * cosu * sinv + 1.0 - M)),
-            (M * cosu * sinv + 1.0 - M) * (M * cosu * cosv + 1.0 - M) + M * M * sinu * sinu * cosv * sinv
+            M * sinu * (M * cosu + cosv - M * cosv),
+            M * (M * (sinv * sinv - sinu * sinu) + cosu * sinu * (M - 1.0)),
+            M * cosu * sinv * (M * cosu * cosv + 1.0 - M) + M * cosu * cosv * (1.0 - M) - M * M + 1.0
           ));
         }
 
@@ -111,7 +111,7 @@
           (
             M * M * (sinu * sinv + sin20u) * sinv,
             M * sinv * (M * cosu * sinv + 1.0 - M),
-            (M * cosu * sinv + 1.0 - M) * (M * cosu * cosv + 1.0 - M) + (M * sinu * cosv - sin20v) * M *(sinu * sinv + sin20u)
+            (M * cosu * sinv + 1.0 - M) * (M * cosu * cosv + 1.0 - M) + (M * sinu * cosv - sin20v) * M * (sinu * sinv + sin20u)
           ));
         }
 
