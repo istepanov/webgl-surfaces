@@ -17,39 +17,61 @@ var state = {
   eyeZ: 5.0,
   morphing: 0.0,
   morphingDirection: 1,
-  morphingEnabled: true,
+  morphingAnimation: true,
   surface: 1,
   lastRenderTime: null,
   lastMouseX: null,
-  lastMouseY: null
+  lastMouseY: null,
+  mouseDown: false
 };
 
 var ui = {
   init: function () {
     this.canvas = document.getElementById("glcanvas");
     this.morphing = document.getElementById("morphing");
-    this.morphingEnabled = document.getElementById("morphing-enabled");
+    this.morphingAnimation = document.getElementById("morphing-animation");
     this.surface = document.getElementById("surface");
 
     this.surface.onchange = this.onSurfaceChange;
     this.morphing.onchange = this.onMorphingChange;
-    this.morphingEnabled.onclick = this.onMorphingEnabledChange;
+    this.morphingAnimation.onclick = this.onMorphingAnimationChange;
+    this.canvas.onmousedown = this.onMouseDown;
+    this.canvas.onmouseup = this.onMouseUp;
     this.canvas.onmousemove = this.onMouseMove;
     this.canvas.onmousewheel = this.onMouseWheel;
     window.onresize = this.onWindowResize;
   },
+  onMouseDown: function() {
+    state.mouseDown = true;
+    state.lastMouseX = event.clientX;
+    state.lastMouseY = event.clientY;
+  },
+  onMouseUp: function() {
+    state.mouseDown = false;
+  },
   onMouseMove: function() {
-    if (!state.lastMouseX || !state.lastMouseY) {
-      state.lastMouseX = event.clientX;
-      state.lastMouseY = event.clientY;
-      return;
+    if (state.mouseDown)
+    {
+      if (!state.lastMouseX || !state.lastMouseY) {
+        state.lastMouseX = event.clientX;
+        state.lastMouseY = event.clientY;
+        return;
+      }
+      var newX = event.clientX;
+      var newY = event.clientY;
+      state.rotationX += state.rotationSpeed * (newX - state.lastMouseX);
+      state.rotationY += state.rotationSpeed * (newY - state.lastMouseY);
+      state.lastMouseX = newX
+      state.lastMouseY = newY;
     }
-    var newX = event.clientX;
-    var newY = event.clientY;
-    state.rotationX += state.rotationSpeed * (newX - state.lastMouseX);
-    state.rotationY += state.rotationSpeed * (newY - state.lastMouseY);
-    state.lastMouseX = newX
-    state.lastMouseY = newY;
+  },
+  onMouseWheel: function() {
+    state.eyeZ += event.wheelDeltaY / 50.0;
+    if (state.eyeZ < 1.0)
+      state.eyeZ = 1.0;
+    else if (state.eyeZ > 20.0)
+      state.eyeZ = 20.0;
+    event.preventDefault()
   },
   onSurfaceChange: function() {
     state.surface = ui.surface.value;
@@ -60,16 +82,8 @@ var ui = {
   onMorphingChange: function() {
     state.morphing = ui.morphing.value / 100.0;
   },
-  onMorphingEnabledChange: function () {
-    state.morphingEnabled = ui.morphingEnabled.checked;
-  },
-  onMouseWheel: function() {
-    state.eyeZ += event.wheelDeltaY / 50.0;
-    if (state.eyeZ < 1.0)
-      state.eyeZ = 1.0;
-    else if (state.eyeZ > 20.0)
-      state.eyeZ = 20.0;
-    event.preventDefault()
+  onMorphingAnimationChange: function () {
+    state.morphingAnimation = ui.morphingAnimation.checked;
   },
   onWindowResize: function() {
     ui.canvas.width = window.innerWidth;
@@ -176,12 +190,12 @@ function drawScene() {
   mvTranslate([-0.0, 0.0, -state.eyeZ]);
 
   // animation
-  if (state.morphingEnabled)
+  if (state.morphingAnimation)
   {
     var currentTime = (new Date).getTime();  
     if (state.lastRenderTime) {  
       var delta = currentTime - state.lastRenderTime;  
-      state.morphing += state.morphingDirection * delta / 5000.0;
+      state.morphing += state.morphingDirection * delta / 10000.0;
       if (state.morphing > 1.0) {
         state.morphing = 1.0;
         state.morphingDirection = -1;
@@ -213,9 +227,13 @@ function drawScene() {
   // indices
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, verticesIndexBuffer);
 
-  mvPushMatrix();  
-  mvRotate(state.rotationX, [0, 1, 0]);
-  mvRotate(state.rotationY, [-1, 0, 0]);
+  mvPushMatrix();
+
+  var matrixRotateX = Matrix.RotationX(state.rotationY * Math.PI / 180.0).ensure4x4();
+  var matrixRotateY = Matrix.RotationY(state.rotationX * Math.PI / 180.0).ensure4x4();
+
+  multMatrix(matrixRotateX);
+  multMatrix(matrixRotateY);
 
   setMatrixUniforms();
 

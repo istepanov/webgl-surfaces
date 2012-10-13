@@ -168,9 +168,9 @@
         void MobiusStrip(float u, float v, float M) {
           position = vec3
           (
-            M * (cos(u) + v * cos(u / 2.0) * cos(u))  + (1.0 - M) * u,
-            M * (sin(u) + v * cos(u / 2.0) * sin(u))  + (1.0 - M) * v,
-            M * (v * sin(u / 2.0))
+            M * (cos(u) + 0.5 * v * cos(u / 2.0) * cos(u))  + (1.0 - M) * u,
+            M * (sin(u) + 0.5 * v * cos(u / 2.0) * sin(u))  + (1.0 - M) * v,
+            M * (0.5 * v * sin(u / 2.0))
           );
           
           normal = normalize (vec3
@@ -287,9 +287,12 @@
       Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
     </canvas>
     <div id="panel">
-      <input id="morphing" type="range" min="0" max="100" value="0" />
-      <input id="morphing-enabled" type="checkbox" checked />
-      <select id="surface">
+      <h2>
+        WebGL Shader Surface Morphing
+      </h2>
+      <div class="item">
+        <label for="surface">Surface</label>
+        <select id="surface">
           <option value="1">No Name</option>
           <option value="2">Modified Sphere</option>
           <option value="3">Cone Spiral</option>
@@ -297,7 +300,19 @@
           <option value="5">Möbius Strip</option>
           <option value="6">Spiral Twisted Cylinder</option>
           <option value="7">Astroidal Ellipse</option>
-      </select>
+        </select>
+      </div>
+      <div class="item">
+        <label for="morphing">Morphing</label>
+        <input id="morphing" type="range" min="0" max="100" value="0" />
+      </div>
+      <div class="item">
+        <label for="morphing-animation">Animation</label>
+        <input id="morphing-animation" type="checkbox" checked />
+      </div>
+      <div class="about">
+        Ilya Stepanov &copy; 2011
+      </div>
     </div>
   </body>
 </html>
