@@ -24,25 +24,66 @@ var state = {
   lastMouseY: null
 };
 
-var ui = {};
+var ui = {
+  init: function () {
+    this.canvas = document.getElementById("glcanvas");
+    this.morphing = document.getElementById("morphing");
+    this.morphingEnabled = document.getElementById("morphing-enabled");
+    this.surface = document.getElementById("surface");
+
+    this.surface.onchange = this.onSurfaceChange;
+    this.morphing.onchange = this.onMorphingChange;
+    this.morphingEnabled.onclick = this.onMorphingEnabledChange;
+    this.canvas.onmousemove = this.onMouseMove;
+    this.canvas.onmousewheel = this.onMouseWheel;
+    window.onresize = this.onWindowResize;
+  },
+  onMouseMove: function() {
+    if (!state.lastMouseX || !state.lastMouseY) {
+      state.lastMouseX = event.clientX;
+      state.lastMouseY = event.clientY;
+      return;
+    }
+    var newX = event.clientX;
+    var newY = event.clientY;
+    state.rotationX += state.rotationSpeed * (newX - state.lastMouseX);
+    state.rotationY += state.rotationSpeed * (newY - state.lastMouseY);
+    state.lastMouseX = newX
+    state.lastMouseY = newY;
+  },
+  onSurfaceChange: function() {
+    state.surface = ui.surface.value;
+    state.morphing = 0.0;
+    state.morphingDirection = 1;
+  },
+  onMorphingChange: function() {
+    state.morphing = ui.morphing.value / 100.0;
+  },
+  onMorphingEnabledChange: function () {
+    state.morphingEnabled = ui.morphingEnabled.checked;
+  },
+  onMouseWheel: function() {
+    state.eyeZ += event.wheelDeltaY / 50.0;
+    if (state.eyeZ < 1.0)
+      state.eyeZ = 1.0;
+    else if (state.eyeZ > 20.0)
+      state.eyeZ = 20.0;
+    event.preventDefault()
+  },
+  onWindowResize: function() {
+    ui.canvas.width = window.innerWidth;
+    ui.canvas.height = window.innerHeight;
+  },
+};
 
 // ------------------------------------------------------------------------
 
 function start() {
+  ui.init();
+  ui.onWindowResize();
 
-  // get DOM elements
-  ui.canvas = document.getElementById("glcanvas");
-  ui.morphing = document.getElementById("morphing");
-  ui.morphingEnabled = document.getElementById("morphing-enabled");
-  ui.surface = document.getElementById("surface");
-
-  ui.surface.onchange = onSurfaceChange;
-  ui.morphing.onchange = handleMorphingChange;
-  ui.morphingEnabled.onclick = handleMorphingEnabledChange;
-  ui.canvas.onmousemove = handleMouseMove;
-  ui.canvas.onmousewheel = handleMouseWheel;
-
-  initWebGL();      // Initialize the GL context
+  // initialize the GL context
+  initWebGL();      
   
   // Only continue if WebGL is available and working
   if (gl) {
@@ -58,9 +99,6 @@ function start() {
     // Here's where we call the routine that builds all the objects
     // we'll be drawing.
     initBuffers();
-
-    window.onresize = handleWindowResize;
-    handleWindowResize();
     
     // Set up to draw the scene periodically.
     setInterval(drawScene, 15);
@@ -116,65 +154,6 @@ function initBuffers() {
   verticesIndexBuffer = gl.createBuffer();  
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, verticesIndexBuffer);  
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-}
-
-// ------------------------------------------------------------------------
-
-function handleMouseMove() {
-    if (!state.lastMouseX || !state.lastMouseY) {
-      state.lastMouseX = event.clientX;
-      state.lastMouseY = event.clientY;
-      return;
-    }
-
-    var newX = event.clientX;
-    var newY = event.clientY;
-
-    state.rotationX += state.rotationSpeed * (newX - state.lastMouseX);
-    state.rotationY += state.rotationSpeed * (newY - state.lastMouseY);
-
-    state.lastMouseX = newX
-    state.lastMouseY = newY;
-}
-
-// ------------------------------------------------------------------------
-
-function onSurfaceChange() {
-  state.surface = ui.surface.value;
-  state.morphing = 0.0;
-  state.morphingDirection = 1;
-}
-
-// ------------------------------------------------------------------------
-
-function handleMorphingChange() {
-  state.morphing = ui.morphing.value / 100.0;
-}
-
-// ------------------------------------------------------------------------
-
-function handleMorphingEnabledChange() {
-  state.morphingEnabled = ui.morphingEnabled.checked;
-}
-
-// ------------------------------------------------------------------------
-
-function handleWindowResize() {
-  ui.canvas.width = window.innerWidth;
-  ui.canvas.height = window.innerHeight;
-}
-
-// ------------------------------------------------------------------------
-
-function handleMouseWheel() {
-  state.eyeZ += event.wheelDeltaY / 50.0;
-  
-  if (state.eyeZ < 1.0)
-    state.eyeZ = 1.0;
-  else if (state.eyeZ > 20.0)
-    state.eyeZ = 20.0;
-
-  event.preventDefault()
 }
 
 // ------------------------------------------------------------------------
