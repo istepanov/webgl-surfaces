@@ -52,7 +52,7 @@
 
       // uniform variables
       uniform int uType;
-      uniform float uDistortion;        // from 0.0 to 1.0
+      uniform float uMorfing;        // from 0.0 to 1.0
       uniform vec3 uLightPosition;
       uniform vec3 uEyePosition;
       
@@ -86,7 +86,7 @@
       vec3 getPosition() {
           float u = aVertexPosition.x;
           float v = aVertexPosition.y;
-          float M = uDistortion;
+          float M = uMorfing;
           
           vec3 position;
 
@@ -112,7 +112,7 @@
       vec3 getNormal() {
           float u = aVertexPosition.x;
           float v = aVertexPosition.y;
-          float M = uDistortion;
+          float M = uMorfing;
           
           vec3 normal;
 

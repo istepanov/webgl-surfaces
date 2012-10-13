@@ -14,8 +14,8 @@ var perspectiveMatrix;
 var rotationX = 0.0;
 var rotationY = 0.0;
 var rotationSpeed = 0.3;
-var distortion = 0.0;
-var distortionDirection = 1;
+var morfing = 0.0;
+var morfingDirection = 1;
 var lastRenderTime;
 var lastMouseX;
 var lastMouseY;
@@ -43,6 +43,8 @@ function start() {
     initBuffers();
 
     document.onmousemove = handleMouseMove;
+    window.onresize = handleWindowResize;
+    handleWindowResize();
     
     // Set up to draw the scene periodically.
     setInterval(drawScene, 15);
@@ -122,7 +124,16 @@ function handleMouseMove()
 
 // ------------------------------------------------------------------------
 
+function handleWindowResize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+// ------------------------------------------------------------------------
+
 function drawScene() {
+  gl.viewport(0, 0, canvas.width, canvas.height);
+
   // Clear the canvas before we start drawing on it.
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   
@@ -130,7 +141,7 @@ function drawScene() {
   // scene. Our field of view is 45 degrees, with a width/height
   // ratio of 640:480, and we only want to see objects between 0.1 units
   // and 100 units away from the camera.
-  perspectiveMatrix = makePerspective(45, 640.0/480.0, 0.1, 100.0);
+  perspectiveMatrix = makePerspective(45, canvas.width/canvas.height, 0.1, 100.0);
   
   // Set the drawing position to the "identity" point, which is
   // the center of the scene.
@@ -143,23 +154,22 @@ function drawScene() {
   var currentTime = (new Date).getTime();  
   if (lastRenderTime) {  
     var delta = currentTime - lastRenderTime;  
-      
-    distortion += distortionDirection * delta / 5000.0;
-    if (distortion > 1.0) {
-      distortion = 1.0;
-      distortionDirection = -1;
+    morfing += morfingDirection * delta / 5000.0;
+    if (morfing > 1.0) {
+      morfing = 1.0;
+      morfingDirection = -1;
     }
-    else if (distortion < 0.0)
+    else if (morfing < 0.0)
     {
-      distortion = 0.0;
-      distortionDirection = 1;
+      morfing = 0.0;
+      morfingDirection = 1;
     }
   }  
   lastRenderTime = currentTime; 
 
   // uniform variables
   //gl.uniform1i(gl.getUniformLocation(shaderProgram, "uType"), 1);
-  gl.uniform1f(gl.getUniformLocation(shaderProgram, "uDistortion"), distortion);
+  gl.uniform1f(gl.getUniformLocation(shaderProgram, "uMorfing"), morfing);
   gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), 0.85, 0.8, 0.75);
   gl.uniform3f(gl.getUniformLocation(shaderProgram, "uEyePosition"), 0.0, 0.0, eyeZ);
   
