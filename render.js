@@ -1,9 +1,7 @@
 var surfaceX = 50;
 var surfaceY = 50;
 var surfaceDelta = 0.15;
-var eyeZ = 5.0;
 
-var canvas;
 var gl;
 var squareVerticesBuffer;
 var mvMatrix;
@@ -11,21 +9,32 @@ var shaderProgram;
 var vertexPositionAttribute;
 var indicesLength = 0;
 var perspectiveMatrix;
-var rotationX = 0.0;
-var rotationY = 0.0;
-var rotationSpeed = 0.3;
-var morfing = 0.0;
-var morfingDirection = 1;
-var lastRenderTime;
-var lastMouseX;
-var lastMouseY;
+
+var state = {
+  rotationX: 0.0,
+  rotationY: 0.0,
+  rotationSpeed: 0.3,
+  eyeZ: 5.0,
+  morphing: 0.0,
+  morphingDirection: 1,
+  lastRenderTime: null,
+  lastMouseX: null,
+  lastMouseY: null
+};
+
+var ui = {};
 
 // ------------------------------------------------------------------------
 
 function start() {
-  canvas = document.getElementById("glcanvas");
 
-  initWebGL(canvas);      // Initialize the GL context
+  // get DOM elements
+  ui.canvas = document.getElementById("glcanvas");
+  ui.morphing = document.getElementById("morphing");
+  ui.morphingEnabled = document.getElementById("morphing-enabled");
+  ui.surfaceType = document.getElementById("surface-type");
+
+  initWebGL();      // Initialize the GL context
   
   // Only continue if WebGL is available and working
   if (gl) {
@@ -57,7 +66,7 @@ function initWebGL() {
   gl = null;
   
   try {
-    gl = canvas.getContext("experimental-webgl");
+    gl = ui.canvas.getContext("experimental-webgl");
   }
   catch(e) {
   }
@@ -106,72 +115,71 @@ function initBuffers() {
 
 function handleMouseMove()
 {
-    if (!lastMouseX || !lastMouseY) {
-      lastMouseX = event.clientX;
-      lastMouseY = event.clientY;
+    if (!state.lastMouseX || !state.lastMouseY) {
+      state.lastMouseX = event.clientX;
+      state.lastMouseY = event.clientY;
       return;
     }
 
     var newX = event.clientX;
     var newY = event.clientY;
 
-    rotationX += rotationSpeed * (newX - lastMouseX);
-    rotationY += rotationSpeed * (newY - lastMouseY);
+    state.rotationX += state.rotationSpeed * (newX - state.lastMouseX);
+    state.rotationY += state.rotationSpeed * (newY - state.lastMouseY);
 
-    lastMouseX = newX
-    lastMouseY = newY;
+    state.lastMouseX = newX
+    state.lastMouseY = newY;
 }
 
 // ------------------------------------------------------------------------
 
 function handleWindowResize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  ui.canvas.width = window.innerWidth;
+  ui.canvas.height = window.innerHeight;
 }
 
 // ------------------------------------------------------------------------
 
 function drawScene() {
-  gl.viewport(0, 0, canvas.width, canvas.height);
+  // set the viewport
+  gl.viewport(0, 0, ui.canvas.width, ui.canvas.height);
 
-  // Clear the canvas before we start drawing on it.
+  // clear the canvas before drawing
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   
-  // Establish the perspective with which we want to view the
-  // scene. Our field of view is 45 degrees, with a width/height
-  // ratio of 640:480, and we only want to see objects between 0.1 units
-  // and 100 units away from the camera.
-  perspectiveMatrix = makePerspective(45, canvas.width/canvas.height, 0.1, 100.0);
+  // establish the perspective
+  perspectiveMatrix = makePerspective(45, ui.canvas.width/ui.canvas.height, 0.1, 100.0);
   
   // Set the drawing position to the "identity" point, which is
   // the center of the scene.
   loadIdentity();
   
   // move the drawing position
-  mvTranslate([-0.0, 0.0, -eyeZ]);
+  mvTranslate([-0.0, 0.0, -state.eyeZ]);
 
   // animation
   var currentTime = (new Date).getTime();  
-  if (lastRenderTime) {  
-    var delta = currentTime - lastRenderTime;  
-    morfing += morfingDirection * delta / 5000.0;
-    if (morfing > 1.0) {
-      morfing = 1.0;
-      morfingDirection = -1;
+  if (state.lastRenderTime) {  
+    var delta = currentTime - state.lastRenderTime;  
+    state.morphing += state.morphingDirection * delta / 5000.0;
+    if (state.morphing > 1.0) {
+      state.morphing = 1.0;
+      state.morphingDirection = -1;
     }
-    else if (morfing < 0.0)
+    else if (state.morphing < 0.0)
     {
-      morfing = 0.0;
-      morfingDirection = 1;
+      state.morphing = 0.0;
+      state.morphingDirection = 1;
     }
+    ui.morphing.value = state.morphing * 100;
   }  
-  lastRenderTime = currentTime; 
+  state.lastRenderTime = currentTime; 
 
   // uniform variables
   //gl.uniform1i(gl.getUniformLocation(shaderProgram, "uType"), 1);
-  gl.uniform1f(gl.getUniformLocation(shaderProgram, "uMorfing"), morfing);
+  gl.uniform1f(gl.getUniformLocation(shaderProgram, "uMorphing"), state.morphing);
   gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), 0.85, 0.8, 0.75);
-  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uEyePosition"), 0.0, 0.0, eyeZ);
+  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uEyePosition"), 0.0, 0.0, state.eyeZ);
   
   // vertices
   gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
@@ -181,8 +189,8 @@ function drawScene() {
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, verticesIndexBuffer);
 
   mvPushMatrix();  
-  mvRotate(rotationX, [0, 1, 0]);
-  mvRotate(rotationY, [-1, 0, 0]);
+  mvRotate(state.rotationX, [0, 1, 0]);
+  mvRotate(state.rotationY, [-1, 0, 0]);
 
   setMatrixUniforms();
 

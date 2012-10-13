@@ -52,7 +52,7 @@
 
       // uniform variables
       uniform int uType;
-      uniform float uMorfing;        // from 0.0 to 1.0
+      uniform float uMorphing;        // from 0.0 to 1.0
       uniform vec3 uLightPosition;
       uniform vec3 uEyePosition;
       
@@ -86,7 +86,7 @@
       vec3 getPosition() {
           float u = aVertexPosition.x;
           float v = aVertexPosition.y;
-          float M = uMorfing;
+          float M = uMorphing;
           
           vec3 position;
 
@@ -112,7 +112,7 @@
       vec3 getNormal() {
           float u = aVertexPosition.x;
           float v = aVertexPosition.y;
-          float M = uMorfing;
+          float M = uMorphing;
           
           vec3 normal;
 
@@ -140,5 +140,14 @@
     <canvas id="glcanvas" width="640" height="480">
       Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
     </canvas>
+    <div id="panel">
+      <input id="morphing" type="range" min="0" max="100" value="0" />
+      <input id="morphing-enabled" type="checkbox" checked />
+      <select id="surface-type">
+        <option value="1">Surface 1</option>
+        <option value="2">Surface 2</option>
+        <option value="3">Surface 3</option>
+      </select>
+    </div>
   </body>
 </html>
