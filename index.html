@@ -7,6 +7,246 @@
     <script src="sylvester.js" type="text/javascript"></script>
     <script src="glUtils.js" type="text/javascript"></script>
     <script src="render.js" type="text/javascript"></script>
+    
+    <!-- Vertex shader program -->
+    <script id="shader-vs" type="x-shader/x-vertex">
+      attribute highp vec3 aVertexPosition;
+
+      // uniform matrices
+      uniform highp mat4 uNormalMatrix;
+      uniform highp mat4 uMVMatrix;
+      uniform highp mat4 uPMatrix;
+
+      // uniform variables
+      uniform int uSurface;
+      uniform float uMorphing;        // from 0.0 to 1.0
+      uniform vec3 uLightPosition;
+      uniform vec3 uEyePosition;
+      
+      varying highp vec3 l;
+      varying highp vec3 h;
+      varying highp vec3 v;
+      varying highp vec3 n;
+
+      vec3 position;
+      vec3 normal;
+      vec3 trasformedPosition;
+
+      void NoName(float u, float v, float M);
+      void ModifiedSphere(float u, float v, float M);
+      void ConeSpiral(float u, float v, float M);
+      void BohemianDome(float u, float v, float M);
+      void MobiusStrip(float u, float v, float M);
+      void SpiralTwistedCylinder(float u, float v, float M);
+      void AstroidalEllipse(float u, float v, float M);
+
+      void main(void) {
+
+        if      (uSurface == 1) { NoName                (aVertexPosition.x, aVertexPosition.y, uMorphing); }
+        else if (uSurface == 2) { ModifiedSphere        (aVertexPosition.x, aVertexPosition.y, uMorphing); }
+        else if (uSurface == 3) { ConeSpiral            (aVertexPosition.x, aVertexPosition.y, uMorphing); }
+        else if (uSurface == 4) { BohemianDome          (aVertexPosition.x, aVertexPosition.y, uMorphing); }
+        else if (uSurface == 5) { MobiusStrip           (aVertexPosition.x, aVertexPosition.y, uMorphing); }
+        else if (uSurface == 6) { SpiralTwistedCylinder (aVertexPosition.x, aVertexPosition.y, uMorphing); }
+        else if (uSurface == 7) { AstroidalEllipse      (aVertexPosition.x, aVertexPosition.y, uMorphing); }
+
+        //position = aVertexPosition;
+        //normal = vec3(0, 0, 1);
+
+        // apply transforms
+        trasformedPosition = vec3(uMVMatrix * vec4(position, 1.0));
+        // apply perspecive
+        gl_Position = uPMatrix * vec4(trasformedPosition, 1.0);
+
+        // Blinn light
+        l = normalize(uLightPosition - trasformedPosition);         // light source vector
+        v = normalize(uEyePosition - trasformedPosition);           // viewer vector
+        h = normalize(l + v);                                       // halfway vector between the viewer and light-source vectors
+        n = vec3(normalize(uNormalMatrix * vec4(normal, 1.0)));     // normal
+      }
+
+        // ----------------------------------------------------------
+
+        void NoName(float u, float v, float M) {
+          float sinu = sin(u);
+          float cosu = cos(u);
+          float sinv = sin(v);
+          float cosv = cos(v);
+        
+          position = vec3
+          (
+            M * sinu * sinv + (1.0 - M) * u,
+            M * cosu * sinv + (1.0 - M) * v,
+            M * cosu * cosv
+          );
+
+          normal = normalize(vec3
+          (
+            M * sinu * (M * sinv * sinv * cosu + cosv * (M * cosu * cosv + 1.0 - M)),
+            -M * (M * sinu * sinu * cosv * cosv - cosu * sinv * (M * cosu * sinv + 1.0 - M)),
+            (M * cosu * sinv + 1.0 - M) * (M * cosu * cosv + 1.0 - M) + M * M * sinu * sinu * cosv * sinv
+          ));
+        }
+
+        // ----------------------------------------------------------
+
+        void ModifiedSphere(float u, float v, float M) {
+          float sinu = sin(u);
+          float cosu = cos(u);
+          float sinv = sin(v);
+          float cosv = cos(v);
+          float sin20u = sin(20.0 * u);
+          float cos20u = cos(20.0 * u);
+          float sin20v = sin(20.0 * v);
+          float cos20v = cos(20.0 * v);
+          
+          position = vec3
+          (
+            M * (sinu * sinv + cos20v * 0.05) + (1.0 - M) * u,
+            M * (cosu * sinv + cos20u * 0.05) + (1.0 - M) * v,
+            M * cosv
+          );
+            
+          normal = normalize(vec3
+          (
+            M * M * (sinu * sinv + sin20u) * sinv,
+            M * sinv * (M * cosu * sinv + 1.0 - M),
+            (M * cosu * sinv + 1.0 - M) * (M * cosu * cosv + 1.0 - M) + (M * sinu * cosv - sin20v) * M *(sinu * sinv + sin20u)
+          ));
+        }
+
+        // ----------------------------------------------------------
+
+        void ConeSpiral(float u, float v, float M) {
+          float sin15v = sin(15.0 * v); 
+          float cos15v = cos(15.0 * v);
+          
+          position = vec3
+          (
+            M * u * v * sin15v + (1.0 - M) * u,
+            v,
+            M * u * v * cos15v
+          );
+            
+          normal = normalize(vec3
+          (
+            -M * v * cos15v,
+            M * v * cos15v * (M * u * sin15v + 15.0 * M * u * v * cos15v) - (M * u * cos15v - 15.0 * M * u * v * sin15v) * (M * v * sin15v + 1.0 - M),
+            M * v * sin15v + 1.0 - M
+          ));
+        }
+
+        // ----------------------------------------------------------
+
+        void BohemianDome(float u, float v, float M) {
+          float sinu = sin(u);
+          float cosu = cos(u);
+          float sinv = sin(v);
+          float cosv = cos(v);
+        
+          float A = 0.5;
+          float B = 1.5;
+          float C = 1.0;
+          
+          position = vec3
+          (
+            M * A * cosu      + (1.0 - M) * u,
+            M * B * cosv + A * sinu + (1.0 - M) * v,
+            M * C * sinv
+          );
+          
+          normal = normalize (vec3
+          (
+            M * M * A * C * cosu * cosv,
+            M * C * cosv * (M * A * sinu - 1.0 + M),
+            (M * A * sinu - 1.0 + M) * (M * B * sinv - 1.0 + M)
+          ));
+        }
+
+        // ----------------------------------------------------------
+
+        void MobiusStrip(float u, float v, float M) {
+          position = vec3
+          (
+            M * (cos(u) + v * cos(u / 2.0) * cos(u))  + (1.0 - M) * u,
+            M * (sin(u) + v * cos(u / 2.0) * sin(u))  + (1.0 - M) * v,
+            M * (v * sin(u / 2.0))
+          );
+          
+          normal = normalize (vec3
+          (
+            pow(M, 2.0) * (cos(u) - 0.5 * sin(u / 2.0) * sin(u) + v * cos(u / 2.0) * cos(u)) * sin(u / 2.0) - 0.5 * (M * cos(u / 2.0) * sin(u) + 1.0 - M) * M * v * cos(u / 2.0),
+            0.5 * pow(M, 2.0) * v * pow(cos(u / 2.0), 2.0) * cos(u) - M * sin(u / 2.0) * (M * (-sin(u) - 0.5 * v * sin(u / 2.0) * cos(u) - v * cos(u / 2.0) * sin(u)) + 1.0 - M),
+            (M * (-sin(u) - 0.5 * v * sin(u / 2.0) * cos(u) - v * cos(u / 2.0) * sin(u)) + 1.0 - M) * (M * cos(u / 2.0) * sin(u) + 1.0 - M) - pow(M, 2.0) * cos(u / 2.0) * cos(u) * (cos(u) - 0.5 * v * sin(u / 2.0) * sin(u) + v * cos(u / 2.0) * cos(u))
+          ));
+        }
+        
+        // ----------------------------------------------------------
+
+        void SpiralTwistedCylinder(float u, float v, float M) {
+          const float turn = 3.0;
+          const float r1 = 0.3;
+          const float r2 = 1.0;
+          const float flute = 0.04;
+          const float freq  = 24.0;
+          
+          position = vec3
+          (
+            M * (r2 * cos(v) + r1 * sin(u * turn) + flute * sin(freq * v)) + (1.0 - M) * u,
+            M * u + (1.0 - M) * v,
+            M * (r2 * sin(v) + r1 * cos(u * turn) + flute * sin(freq * v))
+          );
+               
+          normal = normalize(vec3
+          (
+            M * M * (r2 * cos(v) + flute * cos(freq * v) * freq) + (1.0 - M) * M * r1 * sin(u * turn) * turn, 
+            M * M * r1 * sin(u * turn) * turn * (r2 * sin(v) - flute * cos(freq * v) * freq) - M * (r2 * cos(v) - flute * cos(freq * v) * freq) * (M * r1 * cos(u * turn) * turn + 1.0 - M),
+            (M * r1 * cos(u * turn) * turn + 1.0 - M) * (1.0 - M) + M * M * (r2 * sin(v) - flute * cos(freq * v) * freq)
+          ));
+        }
+
+        // ----------------------------------------------------------
+
+        void AstroidalEllipse(float u, float v, float M) {
+          const float A = 1.0;
+          const float B = 1.0;
+          const float C = 1.0;
+          
+          float sinu = sin(u);
+          float sinv = sin(v);
+          float cosu = cos(u);
+          float cosv = cos(v);
+          
+          float t1 = A * cosu * cosv;
+          float t2 = B * sinu * cosv;
+          float t3 = C * sinv;
+          
+          position = vec3
+          (
+            M * t1 * t1 * t1  + (1.0 - M) * u, 
+            M * t2 * t2 * t2  + (1.0 - M) * v,
+            M * t3 * t3 * t3
+          );
+          
+          float sinu2 = sinu * sinu;
+          float sinv2 = sinv * sinv;
+          float sinu3 = sinu * sinu * sinu;
+          float cosu2 = cosu * cosu;
+          float cosv2 = cosv * cosv;
+          float cosv3 = cosv * cosv * cosv;
+          float cosu4 = cosu * cosu * cosu * cosu;
+          float cosv4 = cosv * cosv * cosv * cosv;
+          float cosv5 = cosv * cosv * cosv * cosv * cosv;
+          
+          normal = normalize (vec3
+          (
+            9.0 * M * M * B * B * B * sinu2 * cosv4 * cos(u) * C * C * C * sinv2,
+            3.0 * M * C * C * C * sinv2 * cosv * (3.0 * M * A * A * A * cosu2 * cosv3 * sinu - 1.0 + M),
+            (3.0 * M * A * A * A * cosu2 * cosv3 * sinu - 1.0 + M) * (3.0 * M * B * B * B * sinu3 * cosv2 * sinv - 1.0 + M) + 9.0 * M * M * A * A * A * cosu4 * cosv5 * sinv * B * B * B * sinu2 
+          ));
+        }
+
+    </script>
 
     <!-- Fragment shader program -->
     <script id="shader-fs" type="x-shader/x-fragment">
@@ -40,100 +280,6 @@
       }
 
     </script>
-    
-    <!-- Vertex shader program -->
-    <script id="shader-vs" type="x-shader/x-vertex">
-      attribute highp vec3 aVertexPosition;
-
-      // uniform matrices
-      uniform highp mat4 uNormalMatrix;
-      uniform highp mat4 uMVMatrix;
-      uniform highp mat4 uPMatrix;
-
-      // uniform variables
-      uniform int uType;
-      uniform float uMorphing;        // from 0.0 to 1.0
-      uniform vec3 uLightPosition;
-      uniform vec3 uEyePosition;
-      
-      varying highp vec3 l;
-      varying highp vec3 h;
-      varying highp vec3 v;
-      varying highp vec3 n;
-
-      vec3 getPosition();
-      vec3 getNormal();
-
-      void main(void) {
-        // get position
-        vec3 position = getPosition();
-        // apply transforms
-        position = vec3(uMVMatrix * vec4(position, 1.0));
-        // apply perspecive
-        gl_Position = uPMatrix * vec4(position, 1.0);
-        // get normal
-        vec3 normal = getNormal();
-
-        // Blinn light
-        l = normalize(uLightPosition - position);                   // light source vector
-        v = normalize(uEyePosition - position);                     // viewer vector
-        h = normalize(l + v);                                       // halfway vector between the viewer and light-source vectors
-        n = vec3(normalize(uNormalMatrix * vec4(normal, 1.0)));     // normal
-      }
-
-      // ----------------------------------
-
-      vec3 getPosition() {
-          float u = aVertexPosition.x;
-          float v = aVertexPosition.y;
-          float M = uMorphing;
-          
-          vec3 position;
-
-          float sinu = sin(u);
-          float cosu = cos(u);
-          float sinv = sin(v);
-          float cosv = cos(v);
-    
-          position = vec3
-          (
-            M * sinu * sinv + (1.0 - M) * u,
-            M * cosu * sinv + (1.0 - M) * v,
-            M * cosu * cosv
-          );
-          
-          //position = aVertexPosition;
-
-          return position;
-      }
-
-      // ----------------------------------
-
-      vec3 getNormal() {
-          float u = aVertexPosition.x;
-          float v = aVertexPosition.y;
-          float M = uMorphing;
-          
-          vec3 normal;
-
-          float sinu = sin(u);
-          float cosu = cos(u);
-          float sinv = sin(v);
-          float cosv = cos(v);
-
-          normal = normalize (vec3
-          (
-            M * sinu * (M * sinv * sinv * cosu + cosv * (M * cosu * cosv + 1.0 - M)),
-            -M * (M * sinu * sinu * cosv * cosv - cosu * sinv * (M * cosu * sinv + 1.0 - M)),
-            (M * cosu * sinv + 1.0 - M) * (M * cosu * cosv + 1.0 - M) + M * M * sinu * sinu * cosv * sinv
-          ));
-
-          //normal = vec3(0, 0, 1);
-
-          return normal;
-      }
-
-    </script>
   </head>
   
   <body onload="start()">
@@ -143,10 +289,14 @@
     <div id="panel">
       <input id="morphing" type="range" min="0" max="100" value="0" />
       <input id="morphing-enabled" type="checkbox" checked />
-      <select id="surface-type">
-        <option value="1">Surface 1</option>
-        <option value="2">Surface 2</option>
-        <option value="3">Surface 3</option>
+      <select id="surface">
+          <option value="1">No Name</option>
+          <option value="2">Modified Sphere</option>
+          <option value="3">Cone Spiral</option>
+          <option value="4">Bohemian Dome</option>
+          <option value="5">Möbius Strip</option>
+          <option value="6">Spiral Twisted Cylinder</option>
+          <option value="7">Astroidal Ellipse</option>
       </select>
     </div>
   </body>

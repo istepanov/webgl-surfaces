@@ -18,6 +18,7 @@ var state = {
   morphing: 0.0,
   morphingDirection: 1,
   morphingEnabled: true,
+  surface: 1,
   lastRenderTime: null,
   lastMouseX: null,
   lastMouseY: null
@@ -33,8 +34,9 @@ function start() {
   ui.canvas = document.getElementById("glcanvas");
   ui.morphing = document.getElementById("morphing");
   ui.morphingEnabled = document.getElementById("morphing-enabled");
-  ui.surfaceType = document.getElementById("surface-type");
+  ui.surface = document.getElementById("surface");
 
+  ui.surface.onchange = onSurfaceChange;
   ui.morphing.onchange = handleMorphingChange;
   ui.morphingEnabled.onclick = handleMorphingEnabledChange;
   ui.canvas.onmousemove = handleMouseMove;
@@ -137,6 +139,14 @@ function handleMouseMove() {
 
 // ------------------------------------------------------------------------
 
+function onSurfaceChange() {
+  state.surface = ui.surface.value;
+  state.morphing = 0.0;
+  state.morphingDirection = 1;
+}
+
+// ------------------------------------------------------------------------
+
 function handleMorphingChange() {
   state.morphing = ui.morphing.value / 100.0;
 }
@@ -179,16 +189,15 @@ function drawScene() {
   // establish the perspective
   perspectiveMatrix = makePerspective(45, ui.canvas.width/ui.canvas.height, 0.1, 100.0);
   
-  // Set the drawing position to the "identity" point, which is
-  // the center of the scene.
+  // Set the drawing position to the "identity" point (the center of the scene)
   loadIdentity();
   
   // move the drawing position
   mvTranslate([-0.0, 0.0, -state.eyeZ]);
 
+  // animation
   if (state.morphingEnabled)
   {
-    // animation
     var currentTime = (new Date).getTime();  
     if (state.lastRenderTime) {  
       var delta = currentTime - state.lastRenderTime;  
@@ -212,7 +221,7 @@ function drawScene() {
   }
 
   // uniform variables
-  //gl.uniform1i(gl.getUniformLocation(shaderProgram, "uType"), 1);
+  gl.uniform1i(gl.getUniformLocation(shaderProgram, "uSurface"), state.surface);
   gl.uniform1f(gl.getUniformLocation(shaderProgram, "uMorphing"), state.morphing);
   gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), 0.85, 0.8, 0.75);
   gl.uniform3f(gl.getUniformLocation(shaderProgram, "uEyePosition"), 0.0, 0.0, state.eyeZ);
