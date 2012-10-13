@@ -17,6 +17,7 @@ var state = {
   eyeZ: 5.0,
   morphing: 0.0,
   morphingDirection: 1,
+  morphingEnabled: true,
   lastRenderTime: null,
   lastMouseX: null,
   lastMouseY: null
@@ -33,6 +34,11 @@ function start() {
   ui.morphing = document.getElementById("morphing");
   ui.morphingEnabled = document.getElementById("morphing-enabled");
   ui.surfaceType = document.getElementById("surface-type");
+
+  ui.morphing.onchange = handleMorphingChange;
+  ui.morphingEnabled.onclick = handleMorphingEnabledChange;
+  ui.canvas.onmousemove = handleMouseMove;
+  ui.canvas.onmousewheel = handleMouseWheel;
 
   initWebGL();      // Initialize the GL context
   
@@ -51,7 +57,6 @@ function start() {
     // we'll be drawing.
     initBuffers();
 
-    document.onmousemove = handleMouseMove;
     window.onresize = handleWindowResize;
     handleWindowResize();
     
@@ -113,8 +118,7 @@ function initBuffers() {
 
 // ------------------------------------------------------------------------
 
-function handleMouseMove()
-{
+function handleMouseMove() {
     if (!state.lastMouseX || !state.lastMouseY) {
       state.lastMouseX = event.clientX;
       state.lastMouseY = event.clientY;
@@ -133,9 +137,34 @@ function handleMouseMove()
 
 // ------------------------------------------------------------------------
 
+function handleMorphingChange() {
+  state.morphing = ui.morphing.value / 100.0;
+}
+
+// ------------------------------------------------------------------------
+
+function handleMorphingEnabledChange() {
+  state.morphingEnabled = ui.morphingEnabled.checked;
+}
+
+// ------------------------------------------------------------------------
+
 function handleWindowResize() {
   ui.canvas.width = window.innerWidth;
   ui.canvas.height = window.innerHeight;
+}
+
+// ------------------------------------------------------------------------
+
+function handleMouseWheel() {
+  state.eyeZ += event.wheelDeltaY / 50.0;
+  
+  if (state.eyeZ < 1.0)
+    state.eyeZ = 1.0;
+  else if (state.eyeZ > 20.0)
+    state.eyeZ = 20.0;
+
+  event.preventDefault()
 }
 
 // ------------------------------------------------------------------------
@@ -157,23 +186,30 @@ function drawScene() {
   // move the drawing position
   mvTranslate([-0.0, 0.0, -state.eyeZ]);
 
-  // animation
-  var currentTime = (new Date).getTime();  
-  if (state.lastRenderTime) {  
-    var delta = currentTime - state.lastRenderTime;  
-    state.morphing += state.morphingDirection * delta / 5000.0;
-    if (state.morphing > 1.0) {
-      state.morphing = 1.0;
-      state.morphingDirection = -1;
-    }
-    else if (state.morphing < 0.0)
-    {
-      state.morphing = 0.0;
-      state.morphingDirection = 1;
-    }
-    ui.morphing.value = state.morphing * 100;
-  }  
-  state.lastRenderTime = currentTime; 
+  if (state.morphingEnabled)
+  {
+    // animation
+    var currentTime = (new Date).getTime();  
+    if (state.lastRenderTime) {  
+      var delta = currentTime - state.lastRenderTime;  
+      state.morphing += state.morphingDirection * delta / 5000.0;
+      if (state.morphing > 1.0) {
+        state.morphing = 1.0;
+        state.morphingDirection = -1;
+      }
+      else if (state.morphing < 0.0)
+      {
+        state.morphing = 0.0;
+        state.morphingDirection = 1;
+      }
+      ui.morphing.value = state.morphing * 100;
+    }  
+    state.lastRenderTime = currentTime;
+  }
+  else
+  {
+    state.lastRenderTime = null;
+  }
 
   // uniform variables
   //gl.uniform1i(gl.getUniformLocation(shaderProgram, "uType"), 1);
