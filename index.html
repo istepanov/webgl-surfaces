@@ -42,12 +42,12 @@
 
       void main(void) {
 
-        if      (uSurface == 1) { NoName                (aVertexPosition.x, aVertexPosition.y, uMorphing); }
-        else if (uSurface == 2) { ModifiedSphere        (aVertexPosition.x, aVertexPosition.y, uMorphing); }
-        else if (uSurface == 3) { ConeSpiral            (aVertexPosition.x, aVertexPosition.y, uMorphing); }
-        else if (uSurface == 4) { BohemianDome          (aVertexPosition.x, aVertexPosition.y, uMorphing); }
-        else if (uSurface == 5) { MobiusStrip           (aVertexPosition.x, aVertexPosition.y, uMorphing); }
-        else if (uSurface == 6) { SpiralTwistedCylinder (aVertexPosition.x, aVertexPosition.y, uMorphing); }
+        if      (uSurface == 1) { SpiralTwistedCylinder (aVertexPosition.x, aVertexPosition.y, uMorphing); }
+        else if (uSurface == 2) { NoName                (aVertexPosition.x, aVertexPosition.y, uMorphing); }
+        else if (uSurface == 3) { ModifiedSphere        (aVertexPosition.x, aVertexPosition.y, uMorphing); }
+        else if (uSurface == 4) { ConeSpiral            (aVertexPosition.x, aVertexPosition.y, uMorphing); }
+        else if (uSurface == 5) { BohemianDome          (aVertexPosition.x, aVertexPosition.y, uMorphing); }
+        else if (uSurface == 6) { MobiusStrip           (aVertexPosition.x, aVertexPosition.y, uMorphing); }
         else if (uSurface == 7) { AstroidalEllipse      (aVertexPosition.x, aVertexPosition.y, uMorphing); }
 
         //position = aVertexPosition;
@@ -65,186 +65,186 @@
         vN = vec3(normalize(uNormalMatrix * vec4(normal, 1.0)));     // normal
       }
 
-        // ----------------------------------------------------------
+      // ----------------------------------------------------------
 
-        void NoName(float u, float v, float M) {
-          float sinu = sin(u);
-          float cosu = cos(u);
-          float sinv = sin(v);
-          float cosv = cos(v);
-        
-          position = vec3
-          (
-            M * sinu * sinv + (1.0 - M) * u,
-            M * cosu * sinv + (1.0 - M) * v,
-            M * cosu * cosv
-          );
-
-          normal = normalize(vec3
-          (
-            M * sinu * (M * cosu + cosv - M * cosv),
-            M * (M * (sinv * sinv - sinu * sinu) + cosu * sinu * (M - 1.0)),
-            M * cosu * sinv * (M * cosu * cosv + 1.0 - M) + M * cosu * cosv * (1.0 - M) - M * M + 1.0
-          ));
-        }
-
-        // ----------------------------------------------------------
-
-        void ModifiedSphere(float u, float v, float M) {
-          float sinu = sin(u);
-          float cosu = cos(u);
-          float sinv = sin(v);
-          float cosv = cos(v);
-          float sin20u = sin(20.0 * u);
-          float cos20u = cos(20.0 * u);
-          float sin20v = sin(20.0 * v);
-          float cos20v = cos(20.0 * v);
+      void SpiralTwistedCylinder(float u, float v, float M) {
+        const float turn = 3.0;
+        const float r1 = 0.3;
+        const float r2 = 1.0;
+        const float flute = 0.04;
+        const float freq  = 24.0;
           
-          position = vec3
-          (
-            M * (sinu * sinv + cos20v * 0.05) + (1.0 - M) * u,
-            M * (cosu * sinv + cos20u * 0.05) + (1.0 - M) * v,
-            M * cosv
-          );
+        position = vec3
+        (
+          M * (r2 * cos(v) + r1 * sin(u * turn) + flute * sin(freq * v)) + (1.0 - M) * u,
+          M * u + (1.0 - M) * v,
+          M * (r2 * sin(v) + r1 * cos(u * turn) + flute * sin(freq * v))
+        );
+             
+        normal = normalize(vec3
+        (
+          M * M * (r2 * cos(v) + flute * cos(freq * v) * freq) + (1.0 - M) * M * r1 * sin(u * turn) * turn, 
+          M * M * r1 * sin(u * turn) * turn * (r2 * sin(v) - flute * cos(freq * v) * freq) - M * (r2 * cos(v) - flute * cos(freq * v) * freq) * (M * r1 * cos(u * turn) * turn + 1.0 - M),
+          (M * r1 * cos(u * turn) * turn + 1.0 - M) * (1.0 - M) + M * M * (r2 * sin(v) - flute * cos(freq * v) * freq)
+        ));
+      }
+
+      // ----------------------------------------------------------
+
+      void NoName(float u, float v, float M) {
+        float sinu = sin(u);
+        float cosu = cos(u);
+        float sinv = sin(v);
+        float cosv = cos(v);
+      
+        position = vec3
+        (
+          M * sinu * sinv + (1.0 - M) * u,
+          M * cosu * sinv + (1.0 - M) * v,
+          M * cosu * cosv
+        );
+
+        normal = normalize(vec3
+        (
+          M * sinu * (M * cosu + cosv - M * cosv),
+          M * (M * (sinv * sinv - sinu * sinu) + cosu * sinu * (M - 1.0)),
+          M * cosu * sinv * (M * cosu * cosv + 1.0 - M) + M * cosu * cosv * (1.0 - M) - M * M + 1.0
+        ));
+      }
+
+      // ----------------------------------------------------------
+
+      void ModifiedSphere(float u, float v, float M) {
+        float sinu = sin(u);
+        float cosu = cos(u);
+        float sinv = sin(v);
+        float cosv = cos(v);
+        float sin20u = sin(20.0 * u);
+        float cos20u = cos(20.0 * u);
+        float sin20v = sin(20.0 * v);
+        float cos20v = cos(20.0 * v);
+        
+        position = vec3
+        (
+          M * (sinu * sinv + cos20v * 0.05) + (1.0 - M) * u,
+          M * (cosu * sinv + cos20u * 0.05) + (1.0 - M) * v,
+          M * cosv
+        );
             
-          normal = normalize(vec3
-          (
-            M * M * (sinu * sinv + sin20u) * sinv,
-            M * sinv * (M * cosu * sinv + 1.0 - M),
-            (M * cosu * sinv + 1.0 - M) * (M * cosu * cosv + 1.0 - M) + (M * sinu * cosv - sin20v) * M * (sinu * sinv + sin20u)
-          ));
-        }
+        normal = normalize(vec3
+        (
+          M * M * (sinu * sinv + sin20u) * sinv,
+          M * sinv * (M * cosu * sinv + 1.0 - M),
+          (M * cosu * sinv + 1.0 - M) * (M * cosu * cosv + 1.0 - M) + (M * sinu * cosv - sin20v) * M * (sinu * sinv + sin20u)
+        ));
+      }
 
-        // ----------------------------------------------------------
+      // ----------------------------------------------------------
 
-        void ConeSpiral(float u, float v, float M) {
-          float sin15v = sin(15.0 * v); 
-          float cos15v = cos(15.0 * v);
-          
-          position = vec3
-          (
-            M * u * v * sin15v + (1.0 - M) * u,
-            v,
-            M * u * v * cos15v
-          );
+      void ConeSpiral(float u, float v, float M) {
+        float sin15v = sin(15.0 * v); 
+        float cos15v = cos(15.0 * v);
+        
+        position = vec3
+        (
+          M * u * v * sin15v + (1.0 - M) * u,
+          v,
+          M * u * v * cos15v
+        );
             
-          normal = normalize(vec3
-          (
-            -M * v * cos15v,
-            M * v * cos15v * (M * u * sin15v + 15.0 * M * u * v * cos15v) - (M * u * cos15v - 15.0 * M * u * v * sin15v) * (M * v * sin15v + 1.0 - M),
-            M * v * sin15v + 1.0 - M
-          ));
-        }
+        normal = normalize(vec3
+        (
+          -M * v * cos15v,
+          M * v * cos15v * (M * u * sin15v + 15.0 * M * u * v * cos15v) - (M * u * cos15v - 15.0 * M * u * v * sin15v) * (M * v * sin15v + 1.0 - M),
+          M * v * sin15v + 1.0 - M
+        ));
+      }
 
-        // ----------------------------------------------------------
+      // ----------------------------------------------------------
 
-        void BohemianDome(float u, float v, float M) {
-          float sinu = sin(u);
-          float cosu = cos(u);
-          float sinv = sin(v);
-          float cosv = cos(v);
+      void BohemianDome(float u, float v, float M) {
+        float sinu = sin(u);
+        float cosu = cos(u);
+        float sinv = sin(v);
+        float cosv = cos(v);
+      
+        float A = 0.5;
+        float B = 1.5;
+        float C = 1.0;
         
-          float A = 0.5;
-          float B = 1.5;
-          float C = 1.0;
-          
-          position = vec3
-          (
-            M * A * cosu + (1.0 - M) * u,
-            M * (B * cosv + A * sinu) + (1.0 - M) * v,
-            M * C * sinv
-          );
-          
-          normal = normalize (vec3
-          (
-            M * M * A * C * cosu * cosv,
-            M * C * cosv * (M * A * sinu - 1.0 + M),
-            (M * A * sinu - 1.0 + M) * (M * B * sinv - 1.0 + M)
-          ));
-        }
-
-        // ----------------------------------------------------------
-
-        void MobiusStrip(float u, float v, float M) {
-          position = vec3
-          (
-            M * (cos(u) + 0.5 * v * cos(u / 2.0) * cos(u))  + (1.0 - M) * u,
-            M * (sin(u) + 0.5 * v * cos(u / 2.0) * sin(u))  + (1.0 - M) * v,
-            M * (0.5 * v * sin(u / 2.0))
-          );
-          
-          normal = normalize (vec3
-          (
-            pow(M, 2.0) * (cos(u) - 0.5 * sin(u / 2.0) * sin(u) + v * cos(u / 2.0) * cos(u)) * sin(u / 2.0) - 0.5 * (M * cos(u / 2.0) * sin(u) + 1.0 - M) * M * v * cos(u / 2.0),
-            0.5 * pow(M, 2.0) * v * pow(cos(u / 2.0), 2.0) * cos(u) - M * sin(u / 2.0) * (M * (-sin(u) - 0.5 * v * sin(u / 2.0) * cos(u) - v * cos(u / 2.0) * sin(u)) + 1.0 - M),
-            (M * (-sin(u) - 0.5 * v * sin(u / 2.0) * cos(u) - v * cos(u / 2.0) * sin(u)) + 1.0 - M) * (M * cos(u / 2.0) * sin(u) + 1.0 - M) - pow(M, 2.0) * cos(u / 2.0) * cos(u) * (cos(u) - 0.5 * v * sin(u / 2.0) * sin(u) + v * cos(u / 2.0) * cos(u))
-          ));
-        }
+        position = vec3
+        (
+          M * A * cosu + (1.0 - M) * u,
+          M * (B * cosv + A * sinu) + (1.0 - M) * v,
+          M * C * sinv
+        );
         
-        // ----------------------------------------------------------
+        normal = normalize (vec3
+        (
+          M * M * A * C * cosu * cosv,
+          M * C * cosv * (M * A * sinu - 1.0 + M),
+          (M * A * sinu - 1.0 + M) * (M * B * sinv - 1.0 + M)
+        ));
+      }
 
-        void SpiralTwistedCylinder(float u, float v, float M) {
-          const float turn = 3.0;
-          const float r1 = 0.3;
-          const float r2 = 1.0;
-          const float flute = 0.04;
-          const float freq  = 24.0;
-          
-          position = vec3
-          (
-            M * (r2 * cos(v) + r1 * sin(u * turn) + flute * sin(freq * v)) + (1.0 - M) * u,
-            M * u + (1.0 - M) * v,
-            M * (r2 * sin(v) + r1 * cos(u * turn) + flute * sin(freq * v))
-          );
-               
-          normal = normalize(vec3
-          (
-            M * M * (r2 * cos(v) + flute * cos(freq * v) * freq) + (1.0 - M) * M * r1 * sin(u * turn) * turn, 
-            M * M * r1 * sin(u * turn) * turn * (r2 * sin(v) - flute * cos(freq * v) * freq) - M * (r2 * cos(v) - flute * cos(freq * v) * freq) * (M * r1 * cos(u * turn) * turn + 1.0 - M),
-            (M * r1 * cos(u * turn) * turn + 1.0 - M) * (1.0 - M) + M * M * (r2 * sin(v) - flute * cos(freq * v) * freq)
-          ));
-        }
+      // ----------------------------------------------------------
 
-        // ----------------------------------------------------------
+      void MobiusStrip(float u, float v, float M) {
+        position = vec3
+        (
+          M * (cos(u) + 0.5 * v * cos(u / 2.0) * cos(u))  + (1.0 - M) * u,
+          M * (sin(u) + 0.5 * v * cos(u / 2.0) * sin(u))  + (1.0 - M) * v,
+          M * (0.5 * v * sin(u / 2.0))
+        );
+          
+        normal = normalize (vec3
+        (
+          pow(M, 2.0) * (cos(u) - 0.5 * sin(u / 2.0) * sin(u) + v * cos(u / 2.0) * cos(u)) * sin(u / 2.0) - 0.5 * (M * cos(u / 2.0) * sin(u) + 1.0 - M) * M * v * cos(u / 2.0),
+          0.5 * pow(M, 2.0) * v * pow(cos(u / 2.0), 2.0) * cos(u) - M * sin(u / 2.0) * (M * (-sin(u) - 0.5 * v * sin(u / 2.0) * cos(u) - v * cos(u / 2.0) * sin(u)) + 1.0 - M),
+          (M * (-sin(u) - 0.5 * v * sin(u / 2.0) * cos(u) - v * cos(u / 2.0) * sin(u)) + 1.0 - M) * (M * cos(u / 2.0) * sin(u) + 1.0 - M) - pow(M, 2.0) * cos(u / 2.0) * cos(u) * (cos(u) - 0.5 * v * sin(u / 2.0) * sin(u) + v * cos(u / 2.0) * cos(u))
+        ));
+      }
 
-        void AstroidalEllipse(float u, float v, float M) {
-          const float A = 1.0;
-          const float B = 1.0;
-          const float C = 1.0;
+      // ----------------------------------------------------------
+
+      void AstroidalEllipse(float u, float v, float M) {
+        const float A = 1.0;
+        const float B = 1.0;
+        const float C = 1.0;
+        
+        float sinu = sin(u);
+        float sinv = sin(v);
+        float cosu = cos(u);
+        float cosv = cos(v);
+        
+        float t1 = A * cosu * cosv;
+        float t2 = B * sinu * cosv;
+        float t3 = C * sinv;
+        
+        position = vec3
+        (
+          M * t1 * t1 * t1  + (1.0 - M) * u, 
+          M * t2 * t2 * t2  + (1.0 - M) * v,
+          M * t3 * t3 * t3
+        );
           
-          float sinu = sin(u);
-          float sinv = sin(v);
-          float cosu = cos(u);
-          float cosv = cos(v);
+        float sinu2 = sinu * sinu;
+        float sinv2 = sinv * sinv;
+        float sinu3 = sinu * sinu * sinu;
+        float cosu2 = cosu * cosu;
+        float cosv2 = cosv * cosv;
+        float cosv3 = cosv * cosv * cosv;
+        float cosu4 = cosu * cosu * cosu * cosu;
+        float cosv4 = cosv * cosv * cosv * cosv;
+        float cosv5 = cosv * cosv * cosv * cosv * cosv;
           
-          float t1 = A * cosu * cosv;
-          float t2 = B * sinu * cosv;
-          float t3 = C * sinv;
-          
-          position = vec3
-          (
-            M * t1 * t1 * t1  + (1.0 - M) * u, 
-            M * t2 * t2 * t2  + (1.0 - M) * v,
-            M * t3 * t3 * t3
-          );
-          
-          float sinu2 = sinu * sinu;
-          float sinv2 = sinv * sinv;
-          float sinu3 = sinu * sinu * sinu;
-          float cosu2 = cosu * cosu;
-          float cosv2 = cosv * cosv;
-          float cosv3 = cosv * cosv * cosv;
-          float cosu4 = cosu * cosu * cosu * cosu;
-          float cosv4 = cosv * cosv * cosv * cosv;
-          float cosv5 = cosv * cosv * cosv * cosv * cosv;
-          
-          normal = normalize (vec3
-          (
-            9.0 * M * M * B * B * B * sinu2 * cosv4 * cos(u) * C * C * C * sinv2,
-            3.0 * M * C * C * C * sinv2 * cosv * (3.0 * M * A * A * A * cosu2 * cosv3 * sinu - 1.0 + M),
-            (3.0 * M * A * A * A * cosu2 * cosv3 * sinu - 1.0 + M) * (3.0 * M * B * B * B * sinu3 * cosv2 * sinv - 1.0 + M) + 9.0 * M * M * A * A * A * cosu4 * cosv5 * sinv * B * B * B * sinu2 
-          ));
-        }
+        normal = normalize (vec3
+        (
+          9.0 * M * M * B * B * B * sinu2 * cosv4 * cos(u) * C * C * C * sinv2,
+          3.0 * M * C * C * C * sinv2 * cosv * (3.0 * M * A * A * A * cosu2 * cosv3 * sinu - 1.0 + M),
+          (3.0 * M * A * A * A * cosu2 * cosv3 * sinu - 1.0 + M) * (3.0 * M * B * B * B * sinu3 * cosv2 * sinv - 1.0 + M) + 9.0 * M * M * A * A * A * cosu4 * cosv5 * sinv * B * B * B * sinu2 
+        ));
+      }
 
     </script>
 
@@ -292,23 +292,14 @@
       </h2>
       <div class="item">
         <label for="surface">Surface</label>
-        <select id="surface">
-          <option value="1">No Name</option>
-          <option value="2">Modified Sphere</option>
-          <option value="3">Cone Spiral</option>
-          <option value="4">Bohemian Dome</option>
-          <option value="5">Möbius Strip</option>
-          <option value="6">Spiral Twisted Cylinder</option>
-          <option value="7">Astroidal Ellipse</option>
-        </select>
+        <select id="surface"></select>
       </div>
       <div class="item">
         <label for="morphing">Morphing</label>
         <input id="morphing" type="range" min="0" max="100" value="0" />
       </div>
-      <div class="item">
-        <label for="morphing-animation">Animation</label>
-        <input id="morphing-animation" type="checkbox" checked />
+      <div class="item button">
+        <input type="button" id="start-stop-animation" value="Stop animation" />
       </div>
       <div class="about">
         Ilya Stepanov &copy; 2011

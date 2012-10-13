@@ -1,6 +1,15 @@
-var surfaceX = 100;
-var surfaceY = 100;
-var surfaceDelta = 0.065;
+var countX = 150;
+var countY = 150;
+
+var surfaces = [
+  { id: 1, name: "Spiral Twisted Cylinder", xmin: -3.142, xmax: 3.142,  ymin: -3.142, ymax: 3.142 },
+  { id: 2, name: "No Name",                 xmin: -3.142, xmax: 3.142,  ymin: -3.142, ymax: 3.142 },
+  { id: 3, name: "Modified Sphere",         xmin: -3.142, xmax: 3.142,  ymin: -3.142, ymax: 3.142 },
+  { id: 4, name: "Cone Spiral",             xmin: -1.0,   xmax: 1.0,    ymin: -1.0,   ymax: 1.0   },
+  { id: 5, name: "Bohemian Dome",           xmin: -6.29,  xmax: 6.29,   ymin: -6.29,  ymax: 6.29 },
+  { id: 6, name: "Möbius Strip",            xmin: 0,      xmax: 6.34,   ymin: -0.3,   ymax: 0.3   },
+  { id: 7, name: "Astroidal Ellipse",       xmin: 0,      xmax: 6.29,   ymin: 0,      ymax: 6.29  },
+];
 
 var gl;
 var squareVerticesBuffer;
@@ -16,9 +25,8 @@ var state = {
   rotationSpeed: 0.3,
   eyeZ: 5.0,
   morphing: 0.0,
-  morphingDirection: 1,
   morphingAnimation: true,
-  surface: 1,
+  surface: surfaces[0],
   lastRenderTime: null,
   lastMouseX: null,
   lastMouseY: null,
@@ -29,12 +37,19 @@ var ui = {
   init: function () {
     this.canvas = document.getElementById("glcanvas");
     this.morphing = document.getElementById("morphing");
-    this.morphingAnimation = document.getElementById("morphing-animation");
+    this.startStopAnimation = document.getElementById("start-stop-animation");
     this.surface = document.getElementById("surface");
+
+    for (var i in surfaces) {
+      var option = document.createElement('option');
+      option.value = surfaces[i].id;
+      option.text = surfaces[i].name;
+      this.surface.add(option);
+    }
 
     this.surface.onchange = this.onSurfaceChange;
     this.morphing.onchange = this.onMorphingChange;
-    this.morphingAnimation.onclick = this.onMorphingAnimationChange;
+    this.startStopAnimation.onclick = this.onStartStopAnimation;
     this.canvas.onmousedown = this.onMouseDown;
     this.canvas.onmouseup = this.onMouseUp;
     this.canvas.onmousemove = this.onMouseMove;
@@ -74,16 +89,30 @@ var ui = {
     event.preventDefault()
   },
   onSurfaceChange: function() {
-    state.surface = ui.surface.value;
+    clearInterval(mainTimer);
+    state.surface = surfaces[ui.surface.value - 1];
     state.morphing = 0.0;
-    state.morphingDirection = 1;
+    state.morphingAnimation = true;
+    ui.startStopAnimation.value = "Stop animation"
     ui.morphing.value = 0.0;
+    state.rotationX = 0.0;
+    state.rotationY = 0.0;
+    initBuffers();
+    mainTimer = setInterval(drawScene, 15);
   },
   onMorphingChange: function() {
     state.morphing = ui.morphing.value / 100.0;
   },
-  onMorphingAnimationChange: function () {
-    state.morphingAnimation = ui.morphingAnimation.checked;
+  onStartStopAnimation: function() {
+    if (state.morphingAnimation) {
+      state.morphingAnimation = false;
+      ui.startStopAnimation.value = "Start animation"
+    }
+    else {
+      if (state.morphing == 1.0) state.morphing = 0.0;
+      state.morphingAnimation = true;
+      ui.startStopAnimation.value = "Stop animation"
+    }
   },
   onWindowResize: function() {
     ui.canvas.width = window.innerWidth;
@@ -116,7 +145,7 @@ function start() {
     initBuffers();
     
     // Set up to draw the scene periodically.
-    setInterval(drawScene, 15);
+    mainTimer = setInterval(drawScene, 15);
   }
 }
 
@@ -142,12 +171,13 @@ function initWebGL() {
 function initBuffers() {
   // vertices
   var vertices = [];
-  var startX = -(surfaceX * surfaceDelta / 2.0);
-  var startY = -(surfaceY * surfaceDelta / 2.0);
 
-  for (var i = 0; i < surfaceY; i++) {
-    for (var j = 0; j < surfaceX; j++) {
-      vertices.push(startX + j * surfaceDelta, startY + i * surfaceDelta, 0.0);
+  var deltaX = (state.surface.xmax - state.surface.xmin) / countX;
+  var deltaY = (state.surface.ymax - state.surface.ymin) / countY;
+
+  for (var i = 0; i < countY; i++) {
+    for (var j = 0; j < countX; j++) {
+      vertices.push(state.surface.xmin + j * deltaX, state.surface.ymin + i * deltaY, 0.0);
     }
   }
 
@@ -157,10 +187,10 @@ function initBuffers() {
 
   // indices
   var indices = [];
-  for (var i = 0; i < surfaceY - 1; i++) {
-    for (var j = 0; j < surfaceX - 1; j++) {
-      indices.push(surfaceX * i + j, surfaceX * i + j + 1, surfaceX * (i + 1) + j);
-      indices.push(surfaceX * i + j + 1, surfaceX * (i + 1) + j + 1, surfaceX * (i + 1) + j);
+  for (var i = 0; i < countY - 1; i++) {
+    for (var j = 0; j < countX - 1; j++) {
+      indices.push(countX * i + j, countX * i + j + 1, countX * (i + 1) + j);
+      indices.push(countX * i + j + 1, countX * (i + 1) + j + 1, countX * (i + 1) + j);
     }
   }
 
@@ -195,15 +225,11 @@ function drawScene() {
     var currentTime = (new Date).getTime();  
     if (state.lastRenderTime) {  
       var delta = currentTime - state.lastRenderTime;  
-      state.morphing += state.morphingDirection * delta / 10000.0;
+      state.morphing += delta / 10000.0;
       if (state.morphing > 1.0) {
         state.morphing = 1.0;
-        state.morphingDirection = -1;
-      }
-      else if (state.morphing < 0.0)
-      {
-        state.morphing = 0.0;
-        state.morphingDirection = 1;
+        state.morphingAnimation = false;
+        ui.startStopAnimation.value = "Start animation";
       }
       ui.morphing.value = state.morphing * 100;
     }  
@@ -215,7 +241,7 @@ function drawScene() {
   }
 
   // uniform variables
-  gl.uniform1i(gl.getUniformLocation(shaderProgram, "uSurface"), state.surface);
+  gl.uniform1i(gl.getUniformLocation(shaderProgram, "uSurface"), state.surface.id);
   gl.uniform1f(gl.getUniformLocation(shaderProgram, "uMorphing"), state.morphing);
   gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), 0.0, 0.0, state.eyeZ);
   gl.uniform3f(gl.getUniformLocation(shaderProgram, "uEyePosition"), 0.0, 0.0, state.eyeZ);

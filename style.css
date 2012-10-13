@@ -1,10 +1,14 @@
-body { margin:0; padding:0; font:15px "Courier New", serif; text-shadow: -1px -1px #333; }
+body { margin:0; padding:0; font:15px "Courier New", serif; font-weight:normal; }
 canvas { background-color: black; margin:0; padding:0; z-index:0; }
-#panel { position:fixed; top:20px; right:20px; padding:10px; border-radius:5px; z-index:10; color:#fff; background: rgba(150, 150, 150, 0.7); }
-#panel h2 { font-size:1em; font-weight:normal; margin:0 0 15px; }
+#panel { position:fixed; top:20px; right:20px; padding:10px; border-radius:5px; z-index:10; background:rgba(150, 150, 150, 0.7); text-shadow: -1px -1px #333; color:#fff; }
+#panel h2 { font-size:1em; margin:0 0 15px; }
 #panel .item { height:25px; }
+#panel .item.button { text-align:center; padding-top:5px; }
 #panel label { display:inline-block; width:80px; height:100%; text-align:right; margin-right:10px; }
 #panel input[type="range"] { position:relative; top:5px; }
 #panel input[type="range"],
 #panel select { width:150px; }
+#panel input[type="button"] { background:rgba(255, 255, 255, 0.1); border:solid 1px #333; border-radius:3px; box-shadow:0 0 1px #222; color:white; font:11px "Courier New", serif; text-shadow: -1px -1px #333; cursor:pointer; }
+#panel input[type="button"]:hover { box-shadow:0 0 4px #000; }
+#panel input[type="button"]:active { box-shadow:none; background:none; }
 #panel .about { font-size:11px; text-align:center; height:auto; margin-top:5px;}
