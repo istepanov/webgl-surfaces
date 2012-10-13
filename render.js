@@ -1,6 +1,6 @@
-var surfaceX = 50;
-var surfaceY = 50;
-var surfaceDelta = 0.15;
+var surfaceX = 100;
+var surfaceY = 100;
+var surfaceDelta = 0.065;
 
 var gl;
 var squareVerticesBuffer;
@@ -217,7 +217,7 @@ function drawScene() {
   // uniform variables
   gl.uniform1i(gl.getUniformLocation(shaderProgram, "uSurface"), state.surface);
   gl.uniform1f(gl.getUniformLocation(shaderProgram, "uMorphing"), state.morphing);
-  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), 0.85, 0.8, 0.75);
+  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), 0.0, 0.0, state.eyeZ);
   gl.uniform3f(gl.getUniformLocation(shaderProgram, "uEyePosition"), 0.0, 0.0, state.eyeZ);
   
   // vertices

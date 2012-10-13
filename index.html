@@ -23,10 +23,10 @@
       uniform vec3 uLightPosition;
       uniform vec3 uEyePosition;
       
-      varying highp vec3 l;
-      varying highp vec3 h;
-      varying highp vec3 v;
-      varying highp vec3 n;
+      varying highp vec3 vL;
+      varying highp vec3 vH;
+      varying highp vec3 vV;
+      varying highp vec3 vN;
 
       vec3 position;
       vec3 normal;
@@ -59,10 +59,10 @@
         gl_Position = uPMatrix * vec4(trasformedPosition, 1.0);
 
         // Blinn light
-        l = normalize(uLightPosition - trasformedPosition);         // light source vector
-        v = normalize(uEyePosition - trasformedPosition);           // viewer vector
-        h = normalize(l + v);                                       // halfway vector between the viewer and light-source vectors
-        n = vec3(normalize(uNormalMatrix * vec4(normal, 1.0)));     // normal
+        vL = normalize(uLightPosition - trasformedPosition);        // light source vector
+        vV = normalize(uEyePosition - trasformedPosition);          // viewer vector
+        vH = normalize(vL + vV);                                    // halfway vector between the viewer and light-source vectors
+        vN = vec3(normalize(uNormalMatrix * vec4(normal, 1.0)));     // normal
       }
 
         // ----------------------------------------------------------
@@ -150,8 +150,8 @@
           
           position = vec3
           (
-            M * A * cosu      + (1.0 - M) * u,
-            M * B * cosv + A * sinu + (1.0 - M) * v,
+            M * A * cosu + (1.0 - M) * u,
+            M * (B * cosv + A * sinu) + (1.0 - M) * v,
             M * C * sinv
           );
           
@@ -254,10 +254,10 @@
       precision highp float;
       #endif
 
-      varying highp vec3 l;
-      varying highp vec3 h;
-      varying highp vec3 v;
-      varying highp vec3 n;
+      varying highp vec3 vL;
+      varying highp vec3 vH;
+      varying highp vec3 vV;
+      varying highp vec3 vN;
 
       void main (void)
       {
@@ -267,12 +267,12 @@
 
           vec3 n2;
           if (gl_FrontFacing)
-            n2 = normalize(n);
+            n2 = normalize(vN);
           else
-            n2 = -normalize(n);
+            n2 = -normalize(vN);
 
-          vec3 l2 = normalize(l);
-          vec3 h2 = normalize(h);
+          vec3 l2 = normalize(vL);
+          vec3 h2 = normalize(vH);
           vec4 diff = diffColor * max(dot(n2, l2), 0.0);
           vec4 spec = specColor * pow(max(dot(n2, h2), 0.0), specPower);
 
