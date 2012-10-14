@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="style.css" type="text/css">
     <script src="sylvester.js" type="text/javascript"></script>
     <script src="glUtils.js" type="text/javascript"></script>
+    <script src="jquery-1.8.2.min.js" type="text/javascript"></script>
     <script src="render.js" type="text/javascript"></script>
     
     <!-- Vertex shader program -->
@@ -299,10 +300,30 @@
         <input id="morphing" type="range" min="0" max="100" value="0" />
       </div>
       <div class="item button">
-        <input type="button" id="start-stop-animation" value="Stop animation" />
+        <input type="button" id="animation-button" value="Stop animation" />
+        <input type="button" id="about-button" value="About" />
       </div>
-      <div class="about">
-        Ilya Stepanov &copy; 2011
+      <div class="item about collapsed">
+        <p>
+          This WebGL demo shows how to calculate and render parametric surfaces on the graphic card using the vertex shader and GLSL (OpenGL Shading Language)
+        </p>
+
+        <p>How to use it:<p>
+        <ul>
+          <li>Click and move your cursor to rotate</li>
+          <li>Scroll to zoom</li>
+          <li>Move the morphing slider to change morphing (left position - unmorphed flat surface, right position - completely morphed 3D surface)</li>
+          <li>You may choose different types of the surfaces in the dropdown list</li>
+        </ul>
+
+        <p>Features:</p>
+        <ul>
+          <li>Any surface is calculated on the graphic card</li>
+          <li>Blinn lighting model</li>
+        </ul>
+      </div>
+      <div class="copyright">
+        Ilya Stepanov &copy; 2012
       </div>
     </div>
   </body>

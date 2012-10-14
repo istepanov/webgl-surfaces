@@ -35,10 +35,12 @@ var state = {
 
 var ui = {
   init: function () {
-    this.canvas = document.getElementById("glcanvas");
-    this.morphing = document.getElementById("morphing");
-    this.startStopAnimation = document.getElementById("start-stop-animation");
-    this.surface = document.getElementById("surface");
+    this.canvas = $("#glcanvas")[0];
+    this.morphing = $("#morphing")[0];
+    this.surface = $("#surface")[0];
+    this.animationButton = $("#animation-button")[0];
+    this.aboutButton = $("#about-button")[0];
+    this.about = $("#panel .item.about")[0];
 
     for (var i in surfaces) {
       var option = document.createElement('option');
@@ -49,7 +51,8 @@ var ui = {
 
     this.surface.onchange = this.onSurfaceChange;
     this.morphing.onchange = this.onMorphingChange;
-    this.startStopAnimation.onclick = this.onStartStopAnimation;
+    this.animationButton.onclick = this.onAnimationButtonClick;
+    this.aboutButton.onclick = this.onAboutButtonClick;
     this.canvas.onmousedown = this.onMouseDown;
     this.canvas.onmouseup = this.onMouseUp;
     this.canvas.onmousemove = this.onMouseMove;
@@ -93,7 +96,7 @@ var ui = {
     state.surface = surfaces[ui.surface.value - 1];
     state.morphing = 0.0;
     state.morphingAnimation = true;
-    ui.startStopAnimation.value = "Stop animation"
+    ui.animationButton.value = "Stop animation"
     ui.morphing.value = 0.0;
     state.rotationX = 0.0;
     state.rotationY = 0.0;
@@ -103,21 +106,24 @@ var ui = {
   onMorphingChange: function() {
     state.morphing = ui.morphing.value / 100.0;
   },
-  onStartStopAnimation: function() {
+  onAnimationButtonClick: function() {
     if (state.morphingAnimation) {
       state.morphingAnimation = false;
-      ui.startStopAnimation.value = "Start animation"
+      ui.animationButton.value = "Start animation"
     }
     else {
       if (state.morphing == 1.0) state.morphing = 0.0;
       state.morphingAnimation = true;
-      ui.startStopAnimation.value = "Stop animation"
+      ui.animationButton.value = "Stop animation"
     }
   },
   onWindowResize: function() {
     ui.canvas.width = window.innerWidth;
     ui.canvas.height = window.innerHeight;
   },
+  onAboutButtonClick: function() {
+    $(ui.about).toggleClass('collapsed');
+  }
 };
 
 // ------------------------------------------------------------------------
@@ -229,7 +235,7 @@ function drawScene() {
       if (state.morphing > 1.0) {
         state.morphing = 1.0;
         state.morphingAnimation = false;
-        ui.startStopAnimation.value = "Start animation";
+        ui.animationButton.value = "Start animation";
       }
       ui.morphing.value = state.morphing * 100;
     }  
